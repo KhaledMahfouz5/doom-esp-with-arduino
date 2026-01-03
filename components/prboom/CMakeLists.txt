@@ -1,5 +1,3 @@
-# components/prboom/CMakeLists.txt
-
 idf_component_register(
     SRCS
         am_map.c
@@ -72,14 +70,7 @@ idf_component_register(
         wi_stuff.c
         z_bmalloc.c
         z_zone.c
+
     INCLUDE_DIRS
         .
-    COMPILE_OPTIONS
-        -Wno-error=char-subscripts
-        -Wno-error=unused-value
-        -Wno-error=parentheses
-        -Wno-error=int-to-pointer-cast
-        -Wno-pointer-sign
-        -Wno-unused-but-set-variable
-        -Wno-maybe-uninitialized
 )
