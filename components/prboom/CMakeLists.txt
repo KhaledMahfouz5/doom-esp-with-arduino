@@ -74,3 +74,18 @@ idf_component_register(
     INCLUDE_DIRS
         .
 )
+
+target_compile_options(${COMPONENT_LIB} PRIVATE
+    -Wno-error=char-subscripts
+    -Wno-error=unused-value
+    -Wno-error=parentheses
+    -Wno-error=int-to-pointer-cast
+    -Wno-pointer-sign
+    -Wno-unused-but-set-variable
+    -Wno-maybe-uninitialized
+    -Wno-missing-field-initializers
+    -Wno-unused-variable
+    -Wno-misleading-indentation
+    -Wno-unused-value
+    -Wno-implicit-fallthrough
+)
