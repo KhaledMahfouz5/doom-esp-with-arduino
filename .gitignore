@@ -1,3 +1,4 @@
+notes/
 build/
 build/bootloader/bootloader.bin
 build/esp32-doom.bin
