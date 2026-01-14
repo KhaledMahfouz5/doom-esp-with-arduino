@@ -16,15 +16,7 @@
 #include "esp_log.h"
 #include "esp_heap_caps.h"
 #include "esp_partition.h"
-
-// حل مشكلة المكتبة المفقودة عبر فحص الإصدار
-#include "esp_version.h"
-#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 3, 0)
-    #include "esp_flash.h"
-#else
-    #include "esp_spi_flash.h"
-#endif
-
+#include "esp_flash.h"
 #include "esp_vfs_fat.h"
 #include "sdmmc_cmd.h"
 #include "driver/sdmmc_host.h"
