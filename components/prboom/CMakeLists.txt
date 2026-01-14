@@ -73,13 +73,11 @@ idf_component_register(
 
     INCLUDE_DIRS
         .
+    REQUIRES
+        prboom-wad-tables
 )
 
 target_compile_options(${COMPONENT_LIB} PRIVATE
-    -Wno-error=char-subscripts
-    -Wno-error=unused-value
-    -Wno-error=parentheses
-    -Wno-error=int-to-pointer-cast
     -Wno-pointer-sign
     -Wno-unused-but-set-variable
     -Wno-maybe-uninitialized
@@ -88,4 +86,14 @@ target_compile_options(${COMPONENT_LIB} PRIVATE
     -Wno-misleading-indentation
     -Wno-unused-value
     -Wno-implicit-fallthrough
+    -Wno-format-truncation
+    -Wno-duplicate-decl-specifier
+    -Wno-unused-function
+    -Wno-unused-but-set-parameter
+    -Wno-parentheses
+    -Wno-char-subscripts
+    -Wno-type-limits
+    -Wno-discarded-qualifiers
+    -Wno-int-to-pointer-cast
+    -Wno-sizeof-pointer-div
 )

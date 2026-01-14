@@ -12,11 +12,22 @@ idf_component_register(
         spi_lcd.c
     INCLUDE_DIRS
         "include"
+	"."
     REQUIRES
+        prboom
         driver
         esp_system
         esp_timer
         esp_event
         vfs
         fatfs
+)
+
+target_compile_options(${COMPONENT_LIB} PRIVATE
+    -Wno-discarded-qualifiers
+    -Wno-deprecated-declarations
+    -Wno-unused-but-set-variable
+    -Wno-unused-variable
+    -Wno-unused-function
+    -Wno-int-conversion
 )

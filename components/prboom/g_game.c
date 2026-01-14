@@ -1416,13 +1416,18 @@ static uint_64_t G_Signature(void)
   if (!computed) {
    computed = true;
    if (gamemode == commercial)
-    for (map = haswolflevels ? 32 : 30; map; map--)
-      sprintf(name, "map%02d", map), s = G_UpdateSignature(s, name);
+    for (map = haswolflevels ? 32 : 30; map; map--){
+      snprintf(name, sizeof(name), "map%02d", map);
+      s = G_UpdateSignature(s, name);
+    }
+
    else
     for (episode = gamemode==retail ? 4 :
      gamemode==shareware ? 1 : 3; episode; episode--)
-      for (map = 9; map; map--)
-  sprintf(name, "E%dM%d", episode, map), s = G_UpdateSignature(s, name);
+      for (map = 9; map; map--){
+      snprintf(name, sizeof(name), "E%dM%d", episode, map);
+	s = G_UpdateSignature(s, name);
+  }
   }
   return s;
 }
