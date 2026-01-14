@@ -19,6 +19,7 @@ idf_component_register(
         esp_system
         esp_timer
         esp_event
+		spi_flash
         vfs
         fatfs
 )
