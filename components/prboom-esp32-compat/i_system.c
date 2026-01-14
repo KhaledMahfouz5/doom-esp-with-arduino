@@ -16,7 +16,14 @@
 #include "esp_log.h"
 #include "esp_heap_caps.h"
 #include "esp_partition.h"
-#include "esp_flash.h"       // بديلة لـ esp_spi_flash.h القديمة
+
+#include "esp_version.h"
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 3, 0)
+    #include "esp_flash.h"
+#else
+    #include "esp_spi_flash.h"
+#endif
+
 #include "esp_vfs_fat.h"
 #include "sdmmc_cmd.h"
 #include "driver/sdmmc_host.h"
@@ -31,6 +38,17 @@
 
 static const char *TAG = "DOOM_SYSTEM";
 
+// يجب تعريف هيكل الملفات هنا لأن I_Read تحتاجه
+typedef struct {
+  FILE* file;
+  int offset;
+  int size;
+  char name[12];
+} FileDesc;
+
+// الإشارة إلى المصفوفة المعرفة في مكان آخر أو تعريفها محلياً
+extern FileDesc fds[32]; 
+
 // تعريفات الأرجل (تأكد من مطابقتها لبوردك)
 #define PIN_NUM_MISO 2 
 #define PIN_NUM_MOSI 13
@@ -39,31 +57,32 @@ static const char *TAG = "DOOM_SYSTEM";
 
 static bool init_SD = false;
 
-// دالة التوقيت المحدثة بدقة عالية
+// دالة التوقيت المحدثة
 static unsigned long getMsTicks() {
     return (unsigned long)(esp_timer_get_time() / 1000);
 }
 
 int I_GetTime_RealTime (void)
 {
-    // TICRATE هو 35 في Doom الأصلية
     return (int)((esp_timer_get_time() * TICRATE) / 1000000);
 }
 
-// دالة تخصيص الذاكرة (Memory Allocation)
-// Doom تستهلك الكثير من الذاكرة، لذا نستخدم الـ PSRAM إذا توفرت
+// دالة تخصيص الذاكرة المحسنة لـ Doom
 void* I_Malloc(size_t size) {
+    // محاولة الحجز في الذاكرة الخارجية أولاً (ضروري جداً لـ Doom)
     void* p = heap_caps_malloc(size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     if (!p) {
-        p = malloc(size); // محاولة التخصيص من الرام الداخلية كحل أخير
+        // إذا فشل، نحاول في الذاكرة الداخلية
+        p = heap_caps_malloc(size, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
     }
     return p;
 }
 
-// تحديث إعدادات الـ SD Card لتتوافق مع ESP-IDF 5.x
 void Init_SD()
 {
-    ESP_LOGI(TAG, "Initializing SD card...");
+    if (init_SD) return;
+
+    ESP_LOGI(TAG, "Initializing SD card via SPI...");
 
     esp_vfs_fat_sdmmc_mount_config_t mount_config = {
         .format_if_mount_failed = false,
@@ -73,7 +92,6 @@ void Init_SD()
 
     sdmmc_card_t* card;
     
-    // إعداد الـ SPI لبطاقة الذاكرة
     spi_bus_config_t bus_cfg = {
         .mosi_io_num = PIN_NUM_MOSI,
         .miso_io_num = PIN_NUM_MISO,
@@ -83,9 +101,9 @@ void Init_SD()
         .max_transfer_sz = 4000,
     };
 
-    // ESP-IDF 5.x يتطلب تهيئة الناقل أولاً
+    // تهيئة الناقل SPI2 (المعروف بـ HSPI سابقاً)
     esp_err_t ret = spi_bus_initialize(SPI2_HOST, &bus_cfg, SDSPI_DEFAULT_DMA_CHAN);
-    if (ret != ESP_OK) {
+    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) { // الإضافة هنا لتجنب الخطأ إذا كان الناقل مهيأ مسبقاً
         ESP_LOGE(TAG, "Failed to initialize SPI bus.");
         return;
     }
@@ -100,14 +118,13 @@ void Init_SD()
     ret = esp_vfs_fat_sdmmc_mount("/sdcard", &host, &slot_config, &mount_config, &card);
 
     if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to mount filesystem. Error: %s", esp_err_to_name(ret));
+        ESP_LOGE(TAG, "Failed to mount SD Card. Error: %s", esp_err_to_name(ret));
         return;
     }
     init_SD = true;
     ESP_LOGI(TAG, "SD Card mounted successfully.");
 }
 
-// دالة الخطأ المحدثة
 void I_Error (char *error, ...)
 {
     va_list argptr;
@@ -116,21 +133,21 @@ void I_Error (char *error, ...)
     va_end(argptr);
     fprintf(stderr, "\n");
     
-    fflush(stderr);
     vTaskDelay(pdMS_TO_TICKS(5000));
-    esp_restart(); // إعادة التشغيل بدلاً من exit(0)
+    esp_restart();
 }
 
-// دالة قراءة الملفات المحدثة (أكثر استقراراً)
 void I_Read(int ifd, void* vbuf, size_t sz)
 {
-    if (fread(vbuf, 1, sz, fds[ifd].file) != sz) {
-        ESP_LOGE(TAG, "I_Read: Error reading %d bytes", sz);
-        // لا تخرج فوراً، ربما يكون خطأ عابر
+    if (fds[ifd].file == NULL) return;
+    
+    // قراءة البيانات والتأكد من نجاحها
+    size_t readBytes = fread(vbuf, 1, sz, fds[ifd].file);
+    if (readBytes != sz) {
+        ESP_LOGE(TAG, "I_Read: Error! Requested %d bytes, got %d", (int)sz, (int)readBytes);
     }
 }
 
-// استبدال exit(0) بـ esp_restart() في كافة الوظائف
 void I_Quit (void)
 {
     ESP_LOGI(TAG, "Quitting Doom...");
