@@ -70,7 +70,7 @@ void I_FinishUpdate(void) {
 
     // إرسال البيانات إلى الدرايفر المحدث
     // ملاحظة: Doom ترسم بـ 8-bit، والدرايفر يجب أن يحولها لـ 16-bit باستخدام lcdpal
-    spi_lcd_send(scr, lcdpal);
+    spi_lcd_send(scr);
 }
 
 void I_PreInitGraphics(void) {

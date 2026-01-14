@@ -31,4 +31,5 @@ target_compile_options(${COMPONENT_LIB} PRIVATE
     -Wno-unused-variable
     -Wno-unused-function
     -Wno-int-conversion
+    -Wno-incompatible-pointer-types
 )
