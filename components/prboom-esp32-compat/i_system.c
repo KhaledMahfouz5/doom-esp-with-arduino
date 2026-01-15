@@ -39,7 +39,7 @@ typedef struct {
   char name[12];
 } FileDesc;
 
-// الإشارة إلى المصفوفة المعرفة في مكان آخر أو تعريفها محلياً
+// الإشارة إلى المصفوفة المعرفة في مكان آخر
 extern FileDesc fds[32]; 
 
 // تعريفات الأرجل (تأكد من مطابقتها لبوردك)
@@ -62,10 +62,8 @@ int I_GetTime_RealTime (void)
 
 // دالة تخصيص الذاكرة المحسنة لـ Doom
 void* I_Malloc(size_t size) {
-    // محاولة الحجز في الذاكرة الخارجية أولاً (ضروري جداً لـ Doom)
     void* p = heap_caps_malloc(size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     if (!p) {
-        // إذا فشل، نحاول في الذاكرة الداخلية
         p = heap_caps_malloc(size, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
     }
     return p;
@@ -94,9 +92,9 @@ void Init_SD()
         .max_transfer_sz = 4000,
     };
 
-    // تهيئة الناقل SPI2 (المعروف بـ HSPI سابقاً)
-    esp_err_t ret = spi_bus_initialize(SPI2_HOST, &bus_cfg, SDSPI_DEFAULT_DMA_CHAN);
-    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) { // الإضافة هنا لتجنب الخطأ إذا كان الناقل مهيأ مسبقاً
+    // التصحيح 1: استخدام SPI_DMA_CH_AUTO بدلاً من SDSPI_DEFAULT_DMA_CHAN
+    esp_err_t ret = spi_bus_initialize(SPI2_HOST, &bus_cfg, SPI_DMA_CH_AUTO);
+    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) { 
         ESP_LOGE(TAG, "Failed to initialize SPI bus.");
         return;
     }
@@ -118,7 +116,8 @@ void Init_SD()
     ESP_LOGI(TAG, "SD Card mounted successfully.");
 }
 
-void I_Error (char *error, ...)
+// التصحيح 2: إضافة const لتطابق تعريف lprintf.h ومنع تعارض الأنواع
+void I_Error (const char *error, ...)
 {
     va_list argptr;
     va_start(argptr, error);
@@ -134,7 +133,6 @@ void I_Read(int ifd, void* vbuf, size_t sz)
 {
     if (fds[ifd].file == NULL) return;
     
-    // قراءة البيانات والتأكد من نجاحها
     size_t readBytes = fread(vbuf, 1, sz, fds[ifd].file);
     if (readBytes != sz) {
         ESP_LOGE(TAG, "I_Read: Error! Requested %d bytes, got %d", (int)sz, (int)readBytes);
@@ -145,7 +143,8 @@ void I_Quit (void)
 {
     ESP_LOGI(TAG, "Quitting Doom...");
     if (init_SD) {
-        esp_vfs_fat_sdmmc_unmount("/sdcard", NULL);
+        // التصحيح 3: استخدام الدالة بدون وسائط وفقاً لتحديثات المكتبة
+        esp_vfs_fat_sdmmc_unmount();
     }
     esp_restart();
 }
