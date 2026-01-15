@@ -165,8 +165,7 @@ unsigned int endoom_mode;
 
 static void PrintVer(void)
 {
-  char vbuf[200];
-  lprintf(LO_INFO,"%s\n",I_GetVersionString(vbuf,200));
+  lprintf(LO_INFO,"%s\n","PrBoom ESP32");
 }
 
 
@@ -238,7 +237,7 @@ int doom_main(int argc, char const * const *argv)
 
   Z_Init();                  /* 1/18/98 killough: start up memory stuff first */
 
-  I_SetAffinityMask();
+//  I_SetAffinityMask();
 
   /* cphipps - call to video specific startup code */
   I_PreInitGraphics();

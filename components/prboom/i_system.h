@@ -47,9 +47,9 @@ int I_GetTime_RealTime(void);     /* killough */
 #ifndef PRBOOM_SERVER
 fixed_t I_GetTimeFrac (void);
 #endif
-void I_GetTime_SaveMS(void);
+int I_GetTime_SaveMS(void);
 
-unsigned long I_GetRandomTimeSeed(void); /* cphipps */
+int I_GetRandomTimeSeed(void); /* cphipps */
 
 void I_uSleep(unsigned long usecs);
 
@@ -73,7 +73,7 @@ void I_Read(int fd, void* buf, size_t sz);
 /* cph 2001/11/18 - Move W_Filelength to i_system.c */
 int I_Filelength(int handle);
 
-void I_SetAffinityMask(void);
+// void I_SetAffinityMask(void);
 
 
 int doom_main(int argc, char const * const * argv);
@@ -92,5 +92,5 @@ void *I_Mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offse
 int I_Munmap(void *addr, size_t length);
 
 int isValidPtr(void *ptr);
-void freeUnusedMmaps(void);
+// void freeUnusedMmaps(void);
 #endif

@@ -406,7 +406,7 @@ void *(Z_Malloc)(size_t size, int tag, void **user
 #endif
       );
     Z_FreeTags(PU_CACHE,PU_CACHE);
-    freeUnusedMmaps();
+   // freeUnusedMmaps();
   }
 
   if (!blockbytag[tag])

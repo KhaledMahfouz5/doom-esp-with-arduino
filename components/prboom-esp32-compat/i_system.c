@@ -7,6 +7,7 @@
 #include <sys/unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <unistd.h>
 
 // المكاتب الخاصة بـ ESP32 المحدثة
 #include "freertos/FreeRTOS.h"
@@ -29,18 +30,18 @@
 #include "i_system.h"
 #include "lprintf.h"
 
+#define MAXOPENFILES 32
+
 static const char *TAG = "DOOM_SYSTEM";
 
 // يجب تعريف هيكل الملفات هنا لأن I_Read تحتاجه
 typedef struct {
-  FILE* file;
-  int offset;
-  int size;
-  char name[12];
+    FILE *file;
+    int handle_type;  // optional
 } FileDesc;
 
 // الإشارة إلى المصفوفة المعرفة في مكان آخر
-extern FileDesc fds[32]; 
+FileDesc fds[MAXOPENFILES];
 
 // تعريفات الأرجل (تأكد من مطابقتها لبوردك)
 #define PIN_NUM_MISO 2 
@@ -147,4 +148,121 @@ void I_Quit (void)
         esp_vfs_fat_sdmmc_unmount();
     }
     esp_restart();
+}
+
+void *I_Mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
+{
+    (void)addr;
+    (void)prot;
+    (void)flags;
+
+    void *buf = malloc(length);
+    if (!buf)
+        return NULL;
+
+    // Seek to lump position
+    if (lseek(fd, offset, SEEK_SET) < 0) {
+        free(buf);
+        return NULL;
+    }
+
+    // Read lump data
+    if (read(fd, buf, length) != (ssize_t)length) {
+        free(buf);
+        return NULL;
+    }
+
+    return buf;
+}
+int I_Lseek(int fd, off_t offset, int whence)
+{
+    return (int)lseek(fd, offset, whence);
+}
+
+int I_Filelength(int fd)
+{
+    struct stat st;
+
+    if (fstat(fd, &st) < 0)
+        return -1;
+
+    return (int)st.st_size;
+}
+
+void I_Close(int fd) { close(fd); }
+
+
+int I_Open(const char *path, int flags)
+{
+    return open(path, flags);
+}
+
+int I_Munmap(void *addr, size_t length)
+{
+    (void)length;
+    free(addr);
+    return 0;
+}
+
+
+int I_GetTime_SaveMS(void)
+{
+    // esp_timer_get_time() returns microseconds
+    return (int)(esp_timer_get_time() / 1000);
+}
+
+void I_uSleep(unsigned long usecs)
+{
+    // convert microseconds to ticks
+    TickType_t ticks = (usecs + 999) / 1000; // ceil to nearest ms
+    if (ticks > 0) {
+        vTaskDelay(ticks);
+    }
+}
+
+char *I_FindFile(const char *wfname, const char *ext)
+{
+    char buf[128];
+
+    if (ext && ext[0] != '\0')
+        snprintf(buf, sizeof(buf), "%s.%s", wfname, ext);
+    else
+        snprintf(buf, sizeof(buf), "%s", wfname);
+
+    char *ret = malloc(strlen(buf) + 1);
+    if (!ret)
+        return NULL;
+
+    strcpy(ret, buf);
+    return ret;
+}
+
+fixed_t I_GetTimeFrac(void)
+{
+    // esp_timer_get_time() returns microseconds
+    int usecs = (int)(esp_timer_get_time() % (1000000 / 35));
+
+    // convert fraction of tic to 16.16 fixed point
+    return (usecs << 16) / (1000000 / 35);
+}
+ 
+const char* I_DoomExeDir(void)
+{
+    return "."; // or "/spiffs" if using SPIFFS
+}
+
+int I_GetRandomTimeSeed(void)
+{
+    return (int)esp_timer_get_time();
+}
+
+void I_EndDisplay(void)
+{
+    // Optional: yield to FreeRTOS or sleep a bit
+    taskYIELD();
+}
+
+void I_UpdateNoBlit(void)
+{
+    taskYIELD(); // give other tasks CPU time
 }

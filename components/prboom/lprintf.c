@@ -101,7 +101,7 @@ int lprintf(OutputLevels pri, const char *s, ...)
 #endif
 
 /*
- * I_Error
+ * PrBoom_I_Error
  *
  * cphipps - moved out of i_* headers, to minimise source files that depend on
  * the low-level headers. All this does is print the error, then call the
@@ -109,7 +109,7 @@ int lprintf(OutputLevels pri, const char *s, ...)
  * killough 3/20/98: add const
  */
 
-void I_Error(const char *error, ...)
+void PrBoom_I_Error(const char *error, ...)
 {
   char errmsg[MAX_MESSAGE_SIZE];
   va_list argptr;
