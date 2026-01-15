@@ -49,6 +49,8 @@ void doomEngineTask(void *pvParameters)
 
 void app_main()
 {
+	uart_control_init();
+	xTaskCreate(uart_control_task, "uart_ctrl", 4096, NULL, 5, NULL);
 	spi_lcd_init();
 	jsInit();
 	xTaskCreatePinnedToCore(&doomEngineTask, "doomEngine", 18000, NULL, 5, NULL, 0);
