@@ -1,6 +1,6 @@
 #include "driver/uart.h"
 #include "esp_log.h"
-
+#include "uart_control.h"
 #define UART_PORT UART_NUM_1
 #define BUF_SIZE  128
 

@@ -846,11 +846,11 @@ static void IdentifyVersion (void)
       case commercial:
         i = strlen(iwad);
         gamemission = doom2;
-        if (i>=10 && !strnicmp(iwad+i-10,"doom2f.wad",10))
+        if (i>=10 && !strnicmp(iwad+i-10,"doom2.wad",10))
           language=french;
-        else if (i>=7 && !strnicmp(iwad+i-7,"tnt.wad",7))
+        else if (i>=7 && !strnicmp(iwad+i-7,"doom3.wad",7))
           gamemission = pack_tnt;
-        else if (i>=12 && !strnicmp(iwad+i-12,"plutonia.wad",12))
+        else if (i>=12 && !strnicmp(iwad+i-12,"doom1.wad",12))
           gamemission = pack_plut;
         break;
       default:
@@ -860,7 +860,7 @@ static void IdentifyVersion (void)
     if (gamemode == indetermined)
       //jff 9/3/98 use logical output routine
       lprintf(LO_WARN,"Unknown Game Version, may not work\n");
-    D_AddFile("prboom.wad",source_pre);//source_iwad);
+    D_AddFile("doom1.wad",source_pre);//source_iwad);
     D_AddFile(iwad,source_iwad);
     free(iwad);
   }

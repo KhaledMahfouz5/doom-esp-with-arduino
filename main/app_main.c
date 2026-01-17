@@ -18,7 +18,7 @@
 #include "rom/ets_sys.h"
 //#include "rom/spi_flash.h"
 #include "rom/crc.h"
-
+#include "uart_control.h"
 #include "soc/soc.h"
 #include "soc/dport_reg.h"
 #include "soc/io_mux_reg.h"
