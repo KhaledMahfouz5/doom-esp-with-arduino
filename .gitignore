@@ -3,3 +3,4 @@ build/
 build/bootloader/bootloader.bin
 build/esp32-doom.bin
 build/partitions.bin
+.cache/
