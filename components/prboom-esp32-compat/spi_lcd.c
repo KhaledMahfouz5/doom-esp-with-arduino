@@ -27,21 +27,21 @@
 
 
 #if 0
-#define PIN_NUM_MISO 25
+#define PIN_NUM_CS   22
+#define PIN_NUM_RST  18
+#define PIN_NUM_DC   21
 #define PIN_NUM_MOSI 23
 #define PIN_NUM_CLK  19
-#define PIN_NUM_CS   22
-#define PIN_NUM_DC   21
-#define PIN_NUM_RST  18
 #define PIN_NUM_BCKL 5
+#define PIN_NUM_MISO 25
 #else
-#define PIN_NUM_MOSI CONFIG_HW_LCD_MOSI_GPIO
-#define PIN_NUM_MISO CONFIG_HW_LCD_MISO_GPIO
-#define PIN_NUM_CLK  CONFIG_HW_LCD_CLK_GPIO
 #define PIN_NUM_CS   CONFIG_HW_LCD_CS_GPIO
-#define PIN_NUM_DC   CONFIG_HW_LCD_DC_GPIO
 #define PIN_NUM_RST  CONFIG_HW_LCD_RESET_GPIO
+#define PIN_NUM_DC   CONFIG_HW_LCD_DC_GPIO
+#define PIN_NUM_MOSI CONFIG_HW_LCD_MOSI_GPIO
+#define PIN_NUM_CLK  CONFIG_HW_LCD_CLK_GPIO
 #define PIN_NUM_BCKL CONFIG_HW_LCD_BL_GPIO
+#define PIN_NUM_MISO CONFIG_HW_LCD_MISO_GPIO
 #endif
 
 //You want this, especially at higher framerates. The 2nd buffer is allocated in iram anyway, so isn't really in the way.
