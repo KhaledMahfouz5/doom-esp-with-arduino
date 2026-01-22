@@ -55,7 +55,7 @@
 // Pins To ESP32
 #define I2S_BCLK_PIN   26
 #define I2S_WS_PIN     25
-#define I2S_DOUT_PIN   22
+#define I2S_DOUT_PIN   19
 
 // Needed for calling the actual sound output.
 #define SAMPLECOUNT		512
