@@ -33,17 +33,12 @@
  */
 
 #include "freertos/FreeRTOS.h"
-#include "driver/i2s.h"
-#include "freertos/queue.h"
+#include "driver/i2s_std.h"
 #include "freertos/task.h"
-
 #include "config.h"
 #include <math.h>
 #include <unistd.h>
-
-
 #include "z_zone.h"
-
 #include "m_swap.h"
 #include "i_sound.h"
 #include "m_argv.h"
@@ -51,22 +46,16 @@
 #include "w_wad.h"
 #include "lprintf.h"
 #include "s_sound.h"
-
 #include "doomdef.h"
 #include "doomstat.h"
 #include "doomtype.h"
-
 #include "d_main.h"
 #include "dma.h"
 
-//SemaphoreHandle_t dmaChannel2Sem = NULL;
-bool audioStarted = false;
-
-int snd_card = 0;
-int mus_card = 0;
-int snd_samplerate = 0;
-
-int channelsOut = 1;
+// Pins To ESP32
+#define I2S_BCLK_PIN   26
+#define I2S_WS_PIN     25
+#define I2S_DOUT_PIN   22
 
 // Needed for calling the actual sound output.
 #define SAMPLECOUNT		512
@@ -77,6 +66,15 @@ int channelsOut = 1;
 
 #define SAMPLERATE		11025	// Hz
 #define SAMPLESIZE		2   	// 16bit
+					//
+// Required by core PrBoom (even if unused on ESP32)
+bool audioStarted = true;
+
+int snd_card = 0;
+int mus_card = 0;
+int snd_samplerate = SAMPLERATE;
+
+static i2s_chan_handle_t i2s_tx_chan = NULL;
 
 // The actual lengths of all sound effects.
 int 		lengths[NUMSFX];
@@ -346,13 +344,6 @@ int I_StartSound(int id, int channel, int vol, int sep, int pitch, int priority)
   return id;
 }
 
-
-
-void I_StopSound (int handle)
-{
-}
-
-
 int I_SoundIsPlaying(int handle)
 {
     return gametic < handle;
@@ -447,7 +438,11 @@ void IRAM_ATTR I_UpdateSound( void )
 
 void I_ShutdownSound(void)
 {
-  i2s_driver_uninstall(I2S_NUM_0); //stop & destroy i2s driver
+	if (i2s_tx_chan) {
+		i2s_channel_disable(i2s_tx_chan);
+		i2s_del_channel(i2s_tx_chan);
+		i2s_tx_chan = NULL;
+	}
 }
 
 void IRAM_ATTR updateTask(void *arg) 
@@ -455,10 +450,13 @@ void IRAM_ATTR updateTask(void *arg)
   size_t bytesWritten;
   while(1)
   {
-    //xSemaphoreTake(dmaChannel2Sem, portMAX_DELAY);
     I_UpdateSound();
-    i2s_write(I2S_NUM_0, mixbuffer, SAMPLECOUNT*SAMPLESIZE, &bytesWritten, portMAX_DELAY);
-    //xSemaphoreGive(dmaChannel2Sem);
+    i2s_channel_write(
+    i2s_tx_chan,
+    mixbuffer,
+    SAMPLECOUNT * SAMPLESIZE,
+    &bytesWritten,
+    portMAX_DELAY);
   }
 }
 
@@ -466,42 +464,33 @@ void I_InitSound(void)
 {
   mixbuffer = malloc(MIXBUFFERSIZE*sizeof(unsigned char));
 
-  static const i2s_config_t i2s_config = {
-    .mode = I2S_MODE_MASTER | I2S_MODE_TX | /*I2S_MODE_PDM,*/ I2S_MODE_DAC_BUILT_IN,
-    .sample_rate = SAMPLERATE,
-    .bits_per_sample = SAMPLESIZE*8, /* the DAC module will only take the 8bits from MSB */
-    .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
-    .communication_format = I2S_COMM_FORMAT_I2S_MSB,
-    .intr_alloc_flags = 0, // default interrupt priority
-    .dma_buf_count = 4,
-    .dma_buf_len = 64,
-    .use_apll = false
-  };
+  i2s_chan_config_t chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
 
-  i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL);   //install and start i2s driver
+  ESP_ERROR_CHECK(i2s_new_channel(&chan_cfg, &i2s_tx_chan, NULL));
 
-  i2s_set_pin(I2S_NUM_0, NULL); //for internal DAC, this will enable both of the internal channels
+i2s_std_config_t std_cfg = {
+    .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(SAMPLERATE),
+    .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(
+        I2S_DATA_BIT_WIDTH_16BIT,
+        I2S_SLOT_MODE_MONO
+    ),
+    .gpio_cfg = {
+        .mclk = I2S_GPIO_UNUSED,
+        .bclk = I2S_BCLK_PIN,
+        .ws   = I2S_WS_PIN,
+        .dout = I2S_DOUT_PIN,
+        .din  = I2S_GPIO_UNUSED,
+        .invert_flags = {
+            .mclk_inv = false,
+            .bclk_inv = false,
+            .ws_inv   = false,
+        },
+    },
+};
 
-  i2s_set_dac_mode(I2S_DAC_CHANNEL_LEFT_EN);  
-/*    
-      Values:
+ESP_ERROR_CHECK(i2s_channel_init_std_mode(i2s_tx_chan, &std_cfg));
+ESP_ERROR_CHECK(i2s_channel_enable(i2s_tx_chan));
 
-      I2S_DAC_CHANNEL_DISABLE = 0
-      Disable I2S built-in DAC signals
-
-      I2S_DAC_CHANNEL_RIGHT_EN = 1
-      Enable I2S built-in DAC right channel, maps to DAC channel 1 on GPIO25
-
-      I2S_DAC_CHANNEL_LEFT_EN = 2
-      Enable I2S built-in DAC left channel, maps to DAC channel 2 on GPIO26
-
-      I2S_DAC_CHANNEL_BOTH_EN = 0x3
-      Enable both of the I2S built-in DAC channels.
-
-      I2S_DAC_CHANNEL_MAX = 0x4
-      I2S built-in DAC mode max index    
-*/
-    
   //i2s_set_sample_rates(I2S_NUM_0, SAMPLERATE); //set sample rates
   audioStarted = true;
 
@@ -537,8 +526,10 @@ void I_InitSound(void)
   
 }
 
-
-
+void I_StopSound(int handle)
+{
+    (void)handle;
+}
 
 void I_ShutdownMusic(void)
 {
@@ -549,24 +540,6 @@ void I_InitMusic(void)
 }
 
 void I_PlaySong(int handle, int looping)
-{
-}
-
-extern int mus_pause_opt; // From m_misc.c
-
-void I_PauseSong (int handle)
-{
-}
-
-void I_ResumeSong (int handle)
-{
-}
-
-void I_StopSong(int handle)
-{
-}
-
-void I_UnRegisterSong(int handle)
 {
 }
 
@@ -584,4 +557,8 @@ void I_SetMusicVolume(int volume)
 {
 }
 
+void I_PauseSong(int handle)    { (void)handle; }
+void I_ResumeSong(int handle)  { (void)handle; }
+void I_StopSong(int handle)    { (void)handle; }
+void I_UnRegisterSong(int handle) { (void)handle; }
 
