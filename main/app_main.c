@@ -16,7 +16,6 @@
 
 #include "rom/cache.h"
 #include "rom/ets_sys.h"
-//#include "rom/spi_flash.h"
 #include "rom/crc.h"
 #include "uart_control.h"
 #include "soc/soc.h"
@@ -29,13 +28,6 @@
 #include "freertos/task.h"
 #include <stdlib.h>
 #include "esp_err.h"
-//#include "nvs_flash.h"
-//#include "esp_partition.h"
-
-//#include "i_system.h"
-
-//#include "spi_lcd.h"
-
 
 extern void jsInit();
 extern int doom_main(int argc, char const * const *argv);
@@ -49,8 +41,8 @@ void doomEngineTask(void *pvParameters)
 
 void app_main()
 {
-	uart_control_init();
-	xTaskCreate(uart_control_task, "uart_ctrl", 4096, NULL, 5, NULL);
+	//uart_control_init();
+	//xTaskCreate(uart_control_task, "uart_ctrl", 4096, NULL, 5, NULL);
 	spi_lcd_init();
 	jsInit();
 	xTaskCreatePinnedToCore(&doomEngineTask, "doomEngine", 18000, NULL, 5, NULL, 0);
