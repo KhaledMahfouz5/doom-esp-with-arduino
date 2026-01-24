@@ -1076,12 +1076,12 @@ const state_t const rostates[NUMSTATES] = {
   {SPR_TNT1,0,-1,NULL,S_TNT1,0,0},          // S_TNT1    // phares 3/8/98
 
   // killough 8/9/98: grenade
-  {SPR_MISL,32768,1000,A_Die,S_GRENADE},      // S_GRENADE
+  {SPR_MISL, 32768, 1000, A_Die, S_GRENADE, 0, 0}, // S_GRENADE
 
   // killough 8/10/98: variable damage explosion
-  {SPR_MISL,32769,4,A_Scream,S_DETONATE2},    // S_DETONATE
-  {SPR_MISL,32770,6,A_Detonate,S_DETONATE3},  // S_DETONATE2
-  {SPR_MISL,32771,10,NULL,S_NULL},            // S_DETONATE3
+  {SPR_MISL,32769,4,A_Scream,S_DETONATE2,0,0},    // S_DETONATE
+  {SPR_MISL,32770,6,A_Detonate,S_DETONATE3,0,0},  // S_DETONATE2
+  {SPR_MISL,32771,10,NULL,S_NULL,0,0},            // S_DETONATE3
 
 #ifdef DOGS
   // killough 7/19/98: Marine's best friend :)

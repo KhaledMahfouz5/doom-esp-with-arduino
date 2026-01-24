@@ -55,7 +55,7 @@
 // Pins To ESP32
 #define I2S_BCLK_PIN   26
 #define I2S_WS_PIN     25
-#define I2S_DOUT_PIN   19
+#define I2S_DOUT_PIN   33
 
 // Needed for calling the actual sound output.
 #define SAMPLECOUNT		512
@@ -114,7 +114,7 @@ int		channelids[NUM_MIX_CHANNELS];
 // This function loads the sound data from the WAD lump,
 //  for single sound.
 //
-void* getsfx(char* sfxname, int* len)
+void* getsfx(const char* sfxname, int* len)
 {
     unsigned char*      sfx;
     unsigned char*      paddedsfx;

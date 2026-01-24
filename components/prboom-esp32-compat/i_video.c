@@ -1,4 +1,5 @@
 #include "config.h"
+#include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "doomstat.h"
@@ -8,7 +9,6 @@
 #include "r_draw.h"
 #include "d_main.h"
 #include "d_event.h"
-#include "gamepad.h"
 #include "i_video.h"
 #include "z_zone.h"
 #include "w_wad.h"
@@ -29,9 +29,7 @@ int use_doublebuffer = 0;
 // لوحة الألوان المحسنة
 int16_t lcdpal[256];
 
-void I_StartTic(void) {
-    gamepadPoll();
-}
+void I_StartTic(void) {}
 
 void I_ShutdownGraphics(void) {}
 
@@ -66,7 +64,7 @@ void I_SetPalette(int pal) {
 // دالة إنهاء تحديث الإطار وإرساله للشاشة
 void I_FinishUpdate(void) {
     // الحصول على بيانات الصورة (التي هي عبارة عن Indices للوحة الألوان)
-    byte *scr = (byte *)screens[0].data;
+    uint16_t *scr = (uint16_t *)screens[0].data;
 
     // إرسال البيانات إلى الدرايفر المحدث
     // ملاحظة: Doom ترسم بـ 8-bit، والدرايفر يجب أن يحولها لـ 16-bit باستخدام lcdpal
@@ -79,10 +77,16 @@ void I_PreInitGraphics(void) {
     // تخصيص ذاكرة الشاشة في الـ Internal RAM لسرعة قصوى إذا أمكن
     // أو في الـ PSRAM إذا كانت الذاكرة الداخلية لا تكفي
     size_t sz = SCREENWIDTH * SCREENHEIGHT;
-    screens[0].data = (byte *)heap_caps_malloc(sz, MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM);
+    screens[0].data = heap_caps_malloc(sz, MALLOC_CAP_8BIT);
     
     if (!screens[0].data) {
-        ESP_LOGE(TAG, "Failed to allocate screen buffer!");
+    ESP_LOGW(TAG, "Internal RAM failed, trying PSRAM...");
+    screens[0].data = heap_caps_malloc(sz, MALLOC_CAP_SPIRAM);
+    }
+
+    if (!screens[0].data) {
+    ESP_LOGE(TAG, "Failed to allocate screen buffer!");
+    abort(); // Doom cannot run without framebuffer
     }
 }
 
@@ -113,7 +117,6 @@ void I_InitGraphics(void) {
         spi_lcd_init(); 
         
         I_UpdateVideoMode();
-        gamepadInit();
     }
 }
 

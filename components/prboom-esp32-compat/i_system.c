@@ -33,6 +33,7 @@
 #define MAXOPENFILES 32
 
 static const char *TAG = "DOOM_SYSTEM";
+static sdmmc_card_t* sd_card = NULL;
 
 // يجب تعريف هيكل الملفات هنا لأن I_Read تحتاجه
 typedef struct {
@@ -44,10 +45,10 @@ typedef struct {
 FileDesc fds[MAXOPENFILES];
 
 // تعريفات الأرجل (تأكد من مطابقتها لبوردك)
-#define PIN_NUM_MISO 2 
-#define PIN_NUM_MOSI 13
-#define PIN_NUM_CLK  14
-#define PIN_NUM_CS   15
+#define PIN_NUM_MISO 19
+#define PIN_NUM_MOSI 23
+#define PIN_NUM_CLK  18
+#define PIN_NUM_CS   13
 
 static bool init_SD = false;
 
@@ -82,8 +83,8 @@ void Init_SD()
         .allocation_unit_size = 16 * 1024
     };
 
-    sdmmc_card_t* card;
-    
+    sdmmc_card_t* card_local; // local temporary pointer
+
     spi_bus_config_t bus_cfg = {
         .mosi_io_num = PIN_NUM_MOSI,
         .miso_io_num = PIN_NUM_MISO,
@@ -93,9 +94,8 @@ void Init_SD()
         .max_transfer_sz = 4000,
     };
 
-    // التصحيح 1: استخدام SPI_DMA_CH_AUTO بدلاً من SDSPI_DEFAULT_DMA_CHAN
     esp_err_t ret = spi_bus_initialize(SPI2_HOST, &bus_cfg, SPI_DMA_CH_AUTO);
-    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) { 
+    if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) {
         ESP_LOGE(TAG, "Failed to initialize SPI bus.");
         return;
     }
@@ -107,12 +107,15 @@ void Init_SD()
     sdmmc_host_t host = SDSPI_HOST_DEFAULT();
     host.slot = SPI2_HOST;
 
-    ret = esp_vfs_fat_sdmmc_mount("/sdcard", &host, &slot_config, &mount_config, &card);
-
+    ret = esp_vfs_fat_sdmmc_mount("/sdcard", &host, &slot_config, &mount_config, &card_local);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to mount SD Card. Error: %s", esp_err_to_name(ret));
         return;
     }
+
+    // ✅ Store pointer globally for later unmount
+    sd_card = card_local;
+
     init_SD = true;
     ESP_LOGI(TAG, "SD Card mounted successfully.");
 }
@@ -140,12 +143,12 @@ void I_Read(int ifd, void* vbuf, size_t sz)
     }
 }
 
-void I_Quit (void)
+void I_Quit(void)
 {
     ESP_LOGI(TAG, "Quitting Doom...");
-    if (init_SD) {
-        // التصحيح 3: استخدام الدالة بدون وسائط وفقاً لتحديثات المكتبة
-        esp_vfs_fat_sdmmc_unmount();
+    if (init_SD && sd_card) {
+        esp_vfs_fat_sdcard_unmount("/sdcard", sd_card);
+        sd_card = NULL;
     }
     esp_restart();
 }

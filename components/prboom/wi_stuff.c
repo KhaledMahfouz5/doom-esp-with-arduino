@@ -224,16 +224,16 @@ static point_t lnodes[NUMEPISODES][NUMMAPS] =
 //
 static anim_t epsd0animinfo[] =
 {
-  { ANIM_ALWAYS, TICRATE/3, 3, { 224, 104 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 184, 160 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 112, 136 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 72, 112 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 88, 96 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 64, 48 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 192, 40 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 136, 16 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 80, 16 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 64, 24 } }
+  { ANIM_ALWAYS, TICRATE/3, 3, { 224, 104 }, 0, 0, {{ 0, 0, 0 }}, 0 },
+  { ANIM_ALWAYS, TICRATE/3, 3, { 184, 160 }, 0, 0, {{ 0, 0, 0 }}, 0 },
+  { ANIM_ALWAYS, TICRATE/3, 3, { 112, 136 }, 0, 0, {{ 0, 0, 0 }}, 0 },
+  { ANIM_ALWAYS, TICRATE/3, 3, { 72, 112 } , 0, 0, {{ 0, 0, 0 }}, 0 },
+  { ANIM_ALWAYS, TICRATE/3, 3, { 88, 96 }  , 0, 0, {{ 0, 0, 0 }}, 0 },
+  { ANIM_ALWAYS, TICRATE/3, 3, { 64, 48 }  , 0, 0, {{ 0, 0, 0 }}, 0 },
+  { ANIM_ALWAYS, TICRATE/3, 3, { 192, 40 } , 0, 0, {{ 0, 0, 0 }}, 0 },
+  { ANIM_ALWAYS, TICRATE/3, 3, { 136, 16 } , 0, 0, {{ 0, 0, 0 }}, 0 },
+  { ANIM_ALWAYS, TICRATE/3, 3, { 80, 16 }  , 0, 0, {{ 0, 0, 0 }}, 0 },
+  { ANIM_ALWAYS, TICRATE/3, 3, { 64, 24 }  , 0, 0, {{ 0, 0, 0 }}, 0 }
 };
 
 static anim_t epsd1animinfo[] =
@@ -251,12 +251,12 @@ static anim_t epsd1animinfo[] =
 
 static anim_t epsd2animinfo[] =
 {
-  { ANIM_ALWAYS, TICRATE/3, 3, { 104, 168 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 40, 136 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 160, 96 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 104, 80 } },
-  { ANIM_ALWAYS, TICRATE/3, 3, { 120, 32 } },
-  { ANIM_ALWAYS, TICRATE/4, 3, { 40, 0 } }
+  { ANIM_ALWAYS, TICRATE/3, 3, { 104, 168 },0, 0, {{ 0, 0, 0 }}, 0 },
+  { ANIM_ALWAYS, TICRATE/3, 3, { 40, 136 }, 0, 0, {{ 0, 0, 0 }}, 0 },
+  { ANIM_ALWAYS, TICRATE/3, 3, { 160, 96 }, 0, 0, {{ 0, 0, 0 }}, 0 },
+  { ANIM_ALWAYS, TICRATE/3, 3, { 104, 80 }, 0, 0, {{ 0, 0, 0 }}, 0 },
+  { ANIM_ALWAYS, TICRATE/3, 3, { 120, 32 }, 0, 0, {{ 0, 0, 0 }}, 0 },
+  { ANIM_ALWAYS, TICRATE/4, 3, {  40,  0 }, 0 ,0, {{ 0, 0, 0 }}, 0 }
 };
 
 static int NUMANIMS[NUMEPISODES] =

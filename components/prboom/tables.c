@@ -58,6 +58,10 @@
 #include "TANGTABL.h"
 #include "TANTOANG.h"
 
+#define FINEANGLES     8192
+#define FINESINE_SIZE  (5*FINEANGLES/4)
+#define FINETAN_SIZE   (FINEANGLES/2)
+
 // killough 5/3/98: reformatted
 
 int SlopeDiv(unsigned num, unsigned den)
@@ -135,12 +139,15 @@ void R_LoadTrigTables(void)
     }
 
     // Must correct endianness of every long loaded (!)
-#define CORRECT_TABLE_ENDIAN(tbl) \
-    for (n = 0; n<sizeof(tbl)/sizeof(tbl[0]); n++) tbl[n] = doom_swap_l(tbl[n])
+    for (n = 0; n < FINESINE_SIZE; n++)
+        finesine[n] = doom_swap_l(finesine[n]);
 
-    CORRECT_TABLE_ENDIAN(finesine);
-    CORRECT_TABLE_ENDIAN(finetangent);
-    CORRECT_TABLE_ENDIAN(tantoangle);
+    for (n = 0; n < FINETAN_SIZE; n++)
+        finetangent[n] = doom_swap_l(finetangent[n]);
+
+    for (n = 0; n < FINEANGLES; n++)
+        tantoangle[n] = doom_swap_l(tantoangle[n]);
+
     lprintf(LO_INFO, "corrected.");
   }
 }

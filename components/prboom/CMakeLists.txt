@@ -80,7 +80,6 @@ idf_component_register(
 target_compile_options(${COMPONENT_LIB} PRIVATE
     -Wno-pointer-sign
     -Wno-unused-but-set-variable
-    -Wno-maybe-uninitialized
     -Wno-missing-field-initializers
     -Wno-unused-variable
     -Wno-misleading-indentation
@@ -95,5 +94,4 @@ target_compile_options(${COMPONENT_LIB} PRIVATE
     -Wno-type-limits
     -Wno-discarded-qualifiers
     -Wno-int-to-pointer-cast
-    -Wno-sizeof-pointer-div
 )
