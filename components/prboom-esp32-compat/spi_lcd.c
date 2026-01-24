@@ -22,6 +22,7 @@
 #include "soc/gpio_struct.h"
 #include "driver/gpio.h"
 #include "esp_heap_caps.h"
+#include "lprintf.h"
 
 #include "sdkconfig.h"
 
@@ -280,7 +281,7 @@ void IRAM_ATTR displayTask(void *arg) {
         .pre_cb=ili_spi_pre_transfer_callback,  //Specify pre-transfer callback to handle D/C line
     };
 
-	printf("*** Display task starting.\n");
+	lprintf(LO_INFO,"*** Display task starting.\n");
 
     //heap_caps_print_heap_info(MALLOC_CAP_DMA);
 
@@ -378,7 +379,7 @@ void spi_lcd_send(uint16_t *scr) {
 }
 
 void spi_lcd_init() {
-	printf("spi_lcd_init()\n");
+	lprintf(LO_INFO,"*spi_lcd_init()\n");
     dispSem=xSemaphoreCreateBinary();
     dispDoneSem=xSemaphoreCreateBinary();
 #ifdef DOUBLE_BUFFER
