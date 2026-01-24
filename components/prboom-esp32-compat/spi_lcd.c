@@ -270,10 +270,10 @@ void IRAM_ATTR displayTask(void *arg) {
         .sclk_io_num=PIN_NUM_CLK,
         .quadwp_io_num=-1,
         .quadhd_io_num=-1,
-        .max_transfer_sz=(MEM_PER_TRANS*2)+16
+	.max_transfer_sz = 4096,
     };
     spi_device_interface_config_t devcfg={
-        .clock_speed_hz=40000000,               //Clock out at 26 MHz. Yes, that's heavily overclocked.
+        .clock_speed_hz=25000000,               //Clock out at 26 MHz. Yes, that's heavily overclocked.
         .mode=0,                                //SPI mode 0
         .spics_io_num=PIN_NUM_CS,               //CS pin
         .queue_size=NO_SIM_TRANS,               //We want to be able to queue this many transfers
