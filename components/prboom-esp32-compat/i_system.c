@@ -45,10 +45,10 @@ typedef struct {
 FileDesc fds[MAXOPENFILES];
 
 // تعريفات الأرجل (تأكد من مطابقتها لبوردك)
-#define PIN_NUM_MISO 19
-#define PIN_NUM_MOSI 23
-#define PIN_NUM_CLK  18
-#define PIN_NUM_CS   13
+#define PIN_NUM_MISO CONFIG_HW_LCD_MISO_GPIO
+#define PIN_NUM_MOSI CONFIG_HW_LCD_MOSI_GPIO
+#define PIN_NUM_CLK  CONFIG_HW_LCD_CLK_GPIO
+#define PIN_NUM_CS   CONFIG_HW_SD_CS_GPIO
 
 static bool init_SD = false;
 

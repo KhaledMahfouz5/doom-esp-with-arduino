@@ -70,6 +70,27 @@ idf.py menuconfig  # Configure pins if needed
 idf.py build flash monitor
 ```
 
+### Configuration
+
+### Menuconfig Options
+
+- **LCD pins**: `CONFIG_HW_LCD_*_GPIO`
+- **SD CS pin**: `CONFIG_HW_SD_CS_GPIO` (default 13)
+- **I2S audio pins**: `CONFIG_HW_I2S_*_GPIO` (BCLK/WS/DOUT)
+- **SPI bus**: VSPI (hardcoded)
+
+### Changing Pins
+
+If you use different pins:
+
+1. Run `idf.py menuconfig`
+2. Go to `ESP32-Doom platform-specific configuration`
+3. Update the pins under:
+   - LCD pins (MISO/MOSI/CLK/CS/DC/RST/BL)
+   - SD card CS pin
+   - I2S audio pins (BCLK/WS/DOUT)
+4. Rebuild and flash
+
 ---
 
 ## Project Structure

@@ -53,9 +53,9 @@
 #include "dma.h"
 
 // Pins To ESP32
-#define I2S_BCLK_PIN   26
-#define I2S_WS_PIN     25
-#define I2S_DOUT_PIN   33
+#define I2S_BCLK_PIN   CONFIG_HW_I2S_BCLK_GPIO
+#define I2S_WS_PIN     CONFIG_HW_I2S_WS_GPIO
+#define I2S_DOUT_PIN   CONFIG_HW_I2S_DOUT_GPIO
 
 // Needed for calling the actual sound output.
 #define SAMPLECOUNT		512

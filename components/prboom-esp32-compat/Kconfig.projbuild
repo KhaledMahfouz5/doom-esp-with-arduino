@@ -165,4 +165,32 @@ config HW_PSX_CMD
 	range 1 35
 	default 2
 
+config HW_SD_CS_GPIO
+	int "SD card CS pin"
+	range 1 35
+	default 13
+	help
+		Chip select pin for the SD card (SPI mode). Must be different from LCD CS.
+
+config HW_I2S_BCLK_GPIO
+	int "I2S BCLK pin"
+	range 1 35
+	default 26
+	help
+		I2S bit clock pin for audio output.
+
+config HW_I2S_WS_GPIO
+	int "I2S WS/LRCK pin"
+	range 1 35
+	default 25
+	help
+		I2S word select (left/right clock) pin for audio output.
+
+config HW_I2S_DOUT_GPIO
+	int "I2S DOUT pin"
+	range 1 35
+	default 33
+	help
+		I2S data out pin for audio output.
+
 endmenu
