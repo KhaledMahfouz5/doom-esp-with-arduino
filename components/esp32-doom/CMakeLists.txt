@@ -1,0 +1,16 @@
+idf_component_register(
+    SRCS
+        display.c
+        input.c
+        sound.c
+    INCLUDE_DIRS
+        "include"
+    REQUIRES
+        driver
+        esp_system
+        esp_timer
+        esp_event
+        spi_flash
+        vfs
+        fatfs
+)
