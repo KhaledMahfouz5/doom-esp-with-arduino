@@ -141,6 +141,15 @@ void resetAuthentication(void)
 void handleKeypadInput(char key)
 {
     if (systemState == STATE_UNLOCKED) {
+        Serial.print("Key pressed: ");
+        Serial.println(key);
+
+        // Update LCD to show the pressed key
+        lcd.setCursor(12, 0);  // Move to position after "Key pressed:"
+        lcd.print("  ");       // Clear previous key
+        lcd.setCursor(12, 0);  // Move back
+        lcd.print(key);        // Show new key
+
         uartSendKey(key);
         return;
     }
@@ -157,6 +166,9 @@ void handleKeypadInput(char key)
         if (checkPassword()) {
             lcd.clear();
             lcd.print("Access Granted");
+            delay(1000);  // Show "Access Granted" for 1 second
+            lcd.clear();
+            lcd.print("Key pressed:");
 
             systemState = STATE_UNLOCKED;
             Serial.println("AUTH_OK");
