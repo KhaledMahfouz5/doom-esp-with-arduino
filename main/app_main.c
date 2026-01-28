@@ -30,19 +30,32 @@
 #include "esp_err.h"
 #include "esp32-doom.h"
 
-void doomEngineTask(void *pvParameters)
-{
-    (void)pvParameters;
-    doom_init();
+void doomEngineTask(void *arg) {
+    TickType_t last = xTaskGetTickCount();
+
     for (;;) {
-        doom_game_tick();
-        vTaskDelay(pdMS_TO_TICKS(1));
+        switch (current_scene) {
+            case SCENE_INTRO:
+                loopIntroTick();
+                break;
+
+            case SCENE_GAME:
+                loopGameTick();
+                break;
+
+            case SCENE_SCORE:
+                loopScoreTick();
+                break;
+
+            case SCENE_MID:
+                loopMidTick();
+                break;
+        }
+
+        vTaskDelayUntil(&last, pdMS_TO_TICKS(DOOM_TICK_MS));
     }
 }
 
-void app_main()
-{
-	//uart_control_init();
-	//xTaskCreate(uart_control_task, "uart_ctrl", 4096, NULL, 5, NULL);
-	xTaskCreatePinnedToCore(&doomEngineTask, "doomEngine", 18000, NULL, 5, NULL, 0);
+void app_main() {
+	xTaskCreatePinnedToCore(&doomEngineTask, "doomEngineTask", 18000, NULL, 5, NULL, 0);
 }

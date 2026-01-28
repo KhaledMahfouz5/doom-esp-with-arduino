@@ -11,7 +11,10 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
+#include "esp_random.h"
 #include "esp_timer.h"
+#include "esp_log.h"
+#include "esp32-doom.h"
 
 // Arduino F() macro stub for ESP-IDF
 #define F(x) (x)
@@ -22,8 +25,10 @@
 #endif
 
 // Missing globals
+volatile doom_scene_t current_scene = SCENE_INTRO;
 static uint8_t music = 0;
 uint16_t zbuffer[ZBUFFER_SIZE];
+UID last_uid = UID_null;
 
 // Arduino pgm_read_byte stub for ESP-IDF
 #define pgm_read_byte(addr) (*(const uint8_t*)(addr))
@@ -39,20 +44,20 @@ UID updatePosition(const uint8_t level[], Coords *pos, double relative_x, double
 void removeEntity(UID uid);
 void clearEntities(void);
 double sign(double a, double b);
-uint8_t getBlockAt(const uint8_t level[], uint8_t x, uint8_t y);
+uint8_t getBlockAt(const uint8_t level[], int x, int y);
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #define max(a,b) ((a) > (b) ? (a) : (b))
 
 // Stub missing functions
+bool found = false;
 static void fadeScreen(uint8_t fade, uint8_t mode) { (void)fade; (void)mode; }
-static void fps(void) {}
+void doom_fps_delay(TickType_t *last) { vTaskDelayUntil(last, pdMS_TO_TICKS(DOOM_TICK_MS)); }
 static void softReset(void) { esp_restart(); }
 static void display_drawBitmap(int16_t x, int16_t y, const void* bitmap, int16_t w, int16_t h, uint16_t color) { (void)x; (void)y; (void)bitmap; (void)w; (void)h; (void)color; }
 static void display_invertDisplay(bool invert) { (void)invert; }
 
-// Arduino millis() stub
-static uint32_t millis() {
-    return esp_timer_get_time() / 1000;
+static inline uint64_t millis64(void) {
+    return esp_timer_get_time() / 1000ULL;
 }
 
 // Swap function for entities
@@ -78,6 +83,7 @@ double sign(double a, double b) {
 }
 
 void doom_init(void) {
+  srand((unsigned int)esp_random());
   setupDisplay();
   input_setup();
   sound_init();
@@ -122,24 +128,11 @@ bool EnemySpawn;
 
 
 // Jump to another scene
-void jumpTo(uint8_t target_scene) {
-  scene = target_scene;
-  exit_scene = true;
-  if (target_scene == INTRO) {
-    if (player.health  == 0) {
-      softReset();
-    }
-    else if (levelID == true) {
-      softReset();
-    }
-    else {
-    enemyCount = 0;
-    }
-  }
+void jumpTo(doom_scene_t next) {
+    current_scene = next;
 }
 
-
-uint8_t getBlockAt(const uint8_t level[], uint8_t x, uint8_t y) {
+uint8_t getBlockAt(const uint8_t level[], int x, int y) {
   if (x < 0 || x >= LEVEL_WIDTH || y < 0 || y >= LEVEL_HEIGHT) {
     return E_FLOOR;
   }
@@ -152,7 +145,7 @@ uint8_t getBlockAt(const uint8_t level[], uint8_t x, uint8_t y) {
 
 // Finds the player in the map
 void initializeLevel(const uint8_t level[]) {
-  for (uint8_t y = LEVEL_HEIGHT - 1; y >= 0; y--) {
+  for (int y = LEVEL_HEIGHT - 1; y >= 0; y--) {
     for (uint8_t x = 0; x < LEVEL_WIDTH; x++) {
       uint8_t block = getBlockAt(level, x, y);
 
@@ -235,8 +228,10 @@ void spawnFireball(double x, double y) {
   // Remove if already exists, don't throw anything. Not the best, but shouldn't happen too often
   if (isSpawned(uid)) return;
 
+  double dx = player.pos.x - x;
+  double dy = player.pos.y - y;
   // Calculate direction. 32 angles
-  int16_t dir = FIREBALL_ANGLES + atan2(y - player.pos.y, x - player.pos.x) / PI * FIREBALL_ANGLES;
+  int16_t dir = (int16_t)(((atan2f(dy, dx) + M_PI) / (2.0f * M_PI)) * FIREBALL_ANGLES);
   if (dir < 0) dir += FIREBALL_ANGLES * 2;
   entity[num_entities] = create_fireball(x, y, dir);
   num_entities++;
@@ -436,7 +431,9 @@ UID updatePosition(const uint8_t level[], Coords *pos, double relative_x, double
   if (!collide_x) pos->x += relative_x;
   if (!collide_y) pos->y += relative_y;
 
-  return collide_x || collide_y || UID_null;
+  if (collide_x) return collide_x;
+  if (collide_y) return collide_y;
+  return UID_null;
 }
 
 void updateEntities(double delta, const uint8_t level[]) {
@@ -816,7 +813,7 @@ void renderEntities(double view_height) {
           uint8_t sprite;
           if (entity[i].state == S_ALERT) {
             // walking
-            sprite = (int)(millis() / 500) % 2;
+            sprite = (int)(millis64() / 500) % 2;
           } else if (entity[i].state == S_FIRING) {
             // fireball
             sprite = 2;
@@ -896,8 +893,8 @@ void renderEntities(double view_height) {
 
 void renderGun(uint8_t gun_pos, double amount_jogging, bool gun_fired, uint8_t r1) {
   // jogging
-  char x = 48 + sin((double) millis() * JOGGING_SPEED) * 10 * amount_jogging - 9;
-  char y = RENDER_HEIGHT - gun_pos + fabs(cos((double) millis() * JOGGING_SPEED)) * 8 * amount_jogging - 3;
+  char x = 48 + sin((double) millis64() * JOGGING_SPEED) * 10 * amount_jogging - 9;
+  char y = RENDER_HEIGHT - gun_pos + fabs(cos((double) millis64() * JOGGING_SPEED)) * 8 * amount_jogging - 3;
   uint8_t clip_height = max(0, min(y + BMP_GUN_HEIGHT, RENDER_HEIGHT) - y);
   if (gun_pos > GUN_SHOT_POS - 2) {
     // Gun fire
@@ -1079,7 +1076,7 @@ void loopMid() {
   drawText(SCREEN_WIDTH / 2 - 27, SCREEN_HEIGHT * .91, F("PRESS FIRE"), 1);
 
   display_flush();
-  while (!exit_scene) {
+  
     if (input_fire()) {
       fade_e = true;
       if (mid < 3) {
@@ -1090,8 +1087,6 @@ void loopMid() {
         jumpTo(SCORE);
       }
     }
-
-  };
 }
 
 
@@ -1106,10 +1101,10 @@ void loopScore() {
   if (player.secret != 0){
     score += 69;
   }
-  if (player.secret2 += 0){
+  if (player.secret2 != 0){
     score += 69;
   }
-  if (player.secret3 += 0){
+  if (player.secret3 != 0){
     score += 69;
   }
   score += k;
@@ -1189,36 +1184,40 @@ void loopScore() {
 
 
 // Intro screen
-void loopIntro() {
-  music = 1;
+void loopIntroTick(void)
+{
+    static bool initialized = false;
 
-  #ifdef SNES_CONTROLLER
-  getControllerData();
-  #endif
+    if (!initialized) {
+        music = 1;
+        playSound(mus_s1_snd, MUS_S1_SND_LEN);
+        initialized = true;
+    }
 
-  display_drawBitmap(
-    (SCREEN_WIDTH - BMP_LOGO_WIDTH) / 2,
-    (SCREEN_HEIGHT - BMP_LOGO_HEIGHT) / 6,
-    bmp_logo_bits,
-    BMP_LOGO_WIDTH,
-    BMP_LOGO_HEIGHT,
-    1
-  );
+    #ifdef SNES_CONTROLLER
+    getControllerData();
+    #endif
 
-  vTaskDelay(pdMS_TO_TICKS(100));
-  drawText(SCREEN_WIDTH / 2.36 - 25, SCREEN_HEIGHT * .79, F("NANO BRUTALITY"), 1);
-  drawText(SCREEN_WIDTH / 4.6 - 25, SCREEN_HEIGHT * .3, F("PRESS"), 1);
-  drawText(SCREEN_WIDTH / 0.99 - 25, SCREEN_HEIGHT * .3, F("FIRE"), 1);
-  drawText(SCREEN_WIDTH / 4.6 - 25, SCREEN_HEIGHT * .91, F("V 1.7"), 1);
-  display_flush();
-  playSound(mus_s1_snd, MUS_S1_SND_LEN);
-  levelID = false;
-  while (!exit_scene) {
-    if (input_fire()) jumpTo(DIFF);
-  };
+    display_drawBitmap(
+        (SCREEN_WIDTH - BMP_LOGO_WIDTH) / 2,
+        (SCREEN_HEIGHT - BMP_LOGO_HEIGHT) / 6,
+        bmp_logo_bits,
+        BMP_LOGO_WIDTH,
+        BMP_LOGO_HEIGHT,
+        1
+    );
 
-  // wait for fire
+    drawText(SCREEN_WIDTH / 2.36 - 25, SCREEN_HEIGHT * .79, F("NANO BRUTALITY"), 1);
+    drawText(SCREEN_WIDTH / 4.6 - 25, SCREEN_HEIGHT * .3, F("PRESS"), 1);
+    drawText(SCREEN_WIDTH / 0.99 - 25, SCREEN_HEIGHT * .3, F("FIRE"), 1);
+    drawText(SCREEN_WIDTH / 4.6 - 25, SCREEN_HEIGHT * .91, F("V 1.7"), 1);
 
+    display_flush();
+
+    if (input_fire()) {
+        initialized = false;          // reset for next time
+        current_scene = SCENE_GAME;
+    }
 }
 
 void loopDiff() {
@@ -1255,7 +1254,7 @@ void loopDiff() {
   }
 
   display_flush();
-  while (!exit_scene) {
+
     if (input_down()) {
       difficulty++;
       if (difficulty == 4) {
@@ -1277,7 +1276,7 @@ void loopDiff() {
       m = false;
       jumpTo(MUS);
     }
-  };
+  
 
   display_flush();
 
@@ -1308,7 +1307,7 @@ void loopMus() {
   }
 
   display_flush();
-  while (!exit_scene) {
+
     if (input_down() || input_up()) {
       m = !m;
       jumpTo(MUS);
@@ -1317,7 +1316,6 @@ void loopMus() {
       fade_e = true;
       jumpTo(MID);
     }
-  };
 
   display_flush();
 
@@ -1326,18 +1324,18 @@ void loopMus() {
 
 
 unsigned long last_time;
-void loopGamePlay() {
+void loopGameTick() {
   const double delta = 0.016;
 
-  bool gun_fired = false;
-  bool walkSoundToggle = false;
-  uint8_t gun_pos = 0;
-  double rot_speed;
-  double old_dir_x;
-  double old_plane_x;
-  double view_height = 0;
-  double jogging = 0;
-  uint8_t fade = GRADIENT_COUNT - 1;
+  static bool gun_fired = false;
+  static bool walkSoundToggle = false;
+  static uint8_t gun_pos = 0;
+  static double rot_speed;
+  static double old_dir_x;
+  static double old_plane_x;
+  static double view_height = 0;
+  static double jogging = 0;
+  static uint8_t fade = GRADIENT_COUNT - 1;
 
 
   mc = false;
@@ -1347,11 +1345,6 @@ void loopGamePlay() {
   if (levelID == true) {
     initializeLevel(E1M1);
   }
-
-
-  do {
-    fps();
-
 
     if (player.keys == 0) {
       coll = false;
@@ -1449,7 +1442,7 @@ void loopGamePlay() {
         vel = 2;
       }
       if (jump == 0) {
-        view_height = fabs(sin((double) millis() * JOGGING_SPEED)) * 6 * jogging;
+        view_height = fabs(sin((double) millis64() * JOGGING_SPEED)) * 6 * jogging;
         vel = 1;
       }
 
@@ -1731,55 +1724,61 @@ void loopGamePlay() {
       vTaskDelay(pdMS_TO_TICKS(500));
     }
 
-  } while (!exit_scene);
+  } 
 
+// Mid-screen scene (placeholder)
+void loopMidTick(void)
+{
+    static bool initialized = false;
+    
+    if (!initialized) {
+        // Initialize mid-screen scene
+        initialized = true;
+        ESP_LOGI("DOOM", "Mid-screen scene initialized");
+    }
+    
+    // For now, just switch back to game scene
+    // TODO: Implement actual mid-screen logic
+    current_scene = SCENE_GAME;
+}
 
-
-
-
+// Score screen scene (placeholder)  
+void loopScoreTick(void)
+{
+    static bool initialized = false;
+    
+    if (!initialized) {
+        // Initialize score scene
+        initialized = true;
+        ESP_LOGI("DOOM", "Score scene initialized");
+    }
+    
+    // For now, just switch back to game scene
+    // TODO: Implement actual score screen logic
+    current_scene = SCENE_GAME;
 }
 
 void doom_game_tick(void) {
-
-  switch (scene) {
-    case INTRO: {
-
-        loopIntro();
-        break;
-      }
-    case SCORE: {
-        loopScore();
-        break;
-      }
-    case MUS: {
-
-        loopMus();
-        break;
-      }
-    case DIFF: {
-        loopDiff();
-        break;
-      }
-    case GAME_PLAY: {
-
-        loopGamePlay();
-
+  switch (current_scene) {
+    case SCENE_INTRO:
+        loopIntroTick();
         break;
 
-      }
-    case MID: {
-        loopMid();
-
+    case SCENE_GAME:
+        loopGameTick();
         break;
-      }
+
+    case SCENE_MID:
+        loopMidTick();
+        break;
+
+    case SCENE_SCORE:
+        loopScoreTick();
+        break;
+
+    default:
+        current_scene = SCENE_INTRO;
+        break;
   }
-
-  if (fade_e == true) {// fade out effect
-    for (uint8_t i=0; i<GRADIENT_COUNT; i++) {
-      fadeScreen(i, 0);
-      display_flush();
-      vTaskDelay(pdMS_TO_TICKS(40));
-    }
-  }
-  exit_scene = false;
 }
+
