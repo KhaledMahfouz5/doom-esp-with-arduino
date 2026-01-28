@@ -1,6 +1,12 @@
 #ifndef _types_h
 #define _types_h
 
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define UID_null  0
 
 // Entity types (legend applies to level.h)
@@ -31,6 +37,10 @@ EType uid_get_type(UID uid);
 
 Coords create_coords(double x, double y);
 uint8_t coords_distance(Coords* a, Coords* b);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

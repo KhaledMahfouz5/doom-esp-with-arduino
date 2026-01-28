@@ -11,7 +11,7 @@ using namespace std;
 #define swap(a, b)            do { typeof(a) temp = a; a = b; b = temp; } while (0)
 #define sign(a, b)            (double) (a > b ? 1 : (b > a ? -1 : 0))
 
-void setup(void) {
+void doom_init(void) {
   setupDisplay();
   input_setup();
   sound_init();
@@ -1640,7 +1640,7 @@ void loopGamePlay() {
 
 }
 
-void loop(void) {
+void doom_game_tick(void) {
 
   switch (scene) {
     case INTRO: {

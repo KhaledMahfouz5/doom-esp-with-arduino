@@ -1,6 +1,9 @@
 /* 
 todo: Moving this to CPP looks like it takes more Flash storage. Figure out why.
 */
+#pragma once
+
+#if defined(DOOM_NANO_BRUTALITY_LEGACY)
 #include "SSD1306.h"
 #include "constants.h"
 
@@ -274,3 +277,27 @@ void drawText(uint8_t x, uint8_t y, int16_t num) {
   itoa(num, buf, 10);
   drawText(x, y, buf);
 }
+
+#else
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdint.h>
+
+void setupDisplay(void);
+void clearDisplay(void);
+void drawPixel(int16_t x, int16_t y, uint16_t color);
+void drawVLine(int16_t x, int16_t y, int16_t h, uint16_t color);
+void drawHLine(int16_t x, int16_t y, int16_t w, uint16_t color);
+void drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
+void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
+void display_flush(void);
+uint16_t *display_get_framebuffer(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

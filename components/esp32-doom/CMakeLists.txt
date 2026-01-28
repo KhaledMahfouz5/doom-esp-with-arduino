@@ -1,12 +1,16 @@
 idf_component_register(
     SRCS
         display.c
+        entities.c
         input.c
+        types.c
         sound.c
+        sound_data.c
     INCLUDE_DIRS
         "include"
     REQUIRES
         driver
+        esp_lcd
         esp_system
         esp_timer
         esp_event
