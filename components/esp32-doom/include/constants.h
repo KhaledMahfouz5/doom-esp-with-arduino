@@ -4,37 +4,6 @@
 #include "game_constants.h"
 #include "sdkconfig.h"
 
-// Hardware pinout (Kconfig-driven; defaults are Arduino placeholders)
-#ifndef CONFIG_HW_LEFT_GPIO
-#define K_LEFT              -1
-#else
-#define K_LEFT              CONFIG_HW_LEFT_GPIO
-#endif
-
-#ifndef CONFIG_HW_RIGHT_GPIO
-#define K_RIGHT             -1
-#else
-#define K_RIGHT             CONFIG_HW_RIGHT_GPIO
-#endif
-
-#ifndef CONFIG_HW_UP_GPIO
-#define K_UP                -1
-#else
-#define K_UP                CONFIG_HW_UP_GPIO
-#endif
-
-#ifndef CONFIG_HW_DOWN_GPIO
-#define K_DOWN              -1
-#else
-#define K_DOWN              CONFIG_HW_DOWN_GPIO
-#endif
-
-#ifndef CONFIG_HW_FIRE_GPIO
-#define K_FIRE              -1
-#else
-#define K_FIRE              CONFIG_HW_FIRE_GPIO
-#endif
-
 // SNES Controller (optional, Arduino placeholders)
 // #define SNES_CONTROLLER
 #define DATA_CLOCK   11

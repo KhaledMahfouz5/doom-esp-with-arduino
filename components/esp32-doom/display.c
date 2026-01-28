@@ -10,27 +10,7 @@
 #include "esp_heap_caps.h"
 #include <string.h>
 
-#if __has_include("esp_lcd_ili9341.h")
 #include "esp_lcd_ili9341.h"
-#define DOOM_HAVE_ESP_LCD_ILI9341 1
-#endif
-
-#ifndef DOOM_HAVE_ESP_LCD_ILI9341
-#define DOOM_HAVE_ESP_LCD_ILI9341 0
-#endif
-
-#if __has_include("esp_lcd_st7789.h")
-#include "esp_lcd_st7789.h"
-#define DOOM_HAVE_ESP_LCD_ST7789 1
-#endif
-
-#ifndef DOOM_HAVE_ESP_LCD_ST7789
-#define DOOM_HAVE_ESP_LCD_ST7789 0
-#endif
-
-#ifndef CONFIG_HW_LCD_TYPE
-#define CONFIG_HW_LCD_TYPE 0
-#endif
 
 #ifndef CONFIG_HW_INV_BL
 #define CONFIG_HW_INV_BL 0
@@ -46,74 +26,29 @@ static uint16_t *framebuffer = NULL;
 void setupDisplay() {
     ESP_LOGI(TAG, "Initializing display for Doom-ESP32-Brutailty");
 
-    const spi_bus_config_t buscfg = {
-        .sclk_io_num = CONFIG_HW_LCD_CLK_GPIO,
-        .mosi_io_num = CONFIG_HW_LCD_MOSI_GPIO,
-        .miso_io_num = CONFIG_HW_LCD_MISO_GPIO,
-        .quadwp_io_num = -1,
-        .quadhd_io_num = -1,
-        .max_transfer_sz = SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(uint16_t),
-    };
+    ESP_LOGI(TAG, "Initialize SPI bus");
+    const spi_bus_config_t bus_config = ILI9341_PANEL_BUS_SPI_CONFIG(CONFIG_HW_LCD_CLK_GPIO, CONFIG_HW_LCD_MOSI_GPIO, SCREEN_WIDTH * SCREEN_HEIGHT * sizeof(uint16_t));
+    ESP_ERROR_CHECK(spi_bus_initialize(SPI2_HOST, &bus_config, SPI_DMA_CH_AUTO));
 
-    esp_err_t err = spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO);
-    if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
-        ESP_LOGE(TAG, "spi_bus_initialize failed: %d", (int)err);
-        return;
-    }
-
+    ESP_LOGI(TAG, "Install panel IO");
     esp_lcd_panel_io_handle_t io_handle = NULL;
-    const esp_lcd_panel_io_spi_config_t io_config = {
-        .dc_gpio_num = CONFIG_HW_LCD_DC_GPIO,
-        .cs_gpio_num = CONFIG_HW_LCD_CS_GPIO,
-        .pclk_hz = 40 * 1000 * 1000,
-        .lcd_cmd_bits = 8,
-        .lcd_param_bits = 8,
-        .spi_mode = 0,
-        .trans_queue_depth = 10,
-    };
+    const esp_lcd_panel_io_spi_config_t io_config = ILI9341_PANEL_IO_SPI_CONFIG(CONFIG_HW_LCD_CS_GPIO, CONFIG_HW_LCD_DC_GPIO, NULL, NULL);
+    ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)SPI2_HOST, &io_config, &io_handle));
 
-    err = esp_lcd_new_panel_io_spi(SPI2_HOST, &io_config, &io_handle);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "esp_lcd_new_panel_io_spi failed: %d", (int)err);
-        return;
-    }
-
+    ESP_LOGI(TAG, "Install ILI9341 panel driver");
+    esp_lcd_panel_handle_t panel_handle = NULL;
     const esp_lcd_panel_dev_config_t panel_config = {
         .reset_gpio_num = CONFIG_HW_LCD_RESET_GPIO,
-        .color_space = ESP_LCD_COLOR_SPACE_RGB,
+        .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
         .bits_per_pixel = 16,
     };
-
-#if CONFIG_HW_LCD_TYPE == 0
-    #if DOOM_HAVE_ESP_LCD_ILI9341
-    err = esp_lcd_new_panel_ili9341(io_handle, &panel_config, &s_panel);
-    #else
-    ESP_LOGE(TAG, "ILI9341 panel selected but esp_lcd_ili9341.h not available in this ESP-IDF");
-    return;
-    #endif
-#else
-    #if DOOM_HAVE_ESP_LCD_ST7789
-    err = esp_lcd_new_panel_st7789(io_handle, &panel_config, &s_panel);
-    #else
-    ESP_LOGE(TAG, "ST7789 panel selected but esp_lcd_st7789.h not available in this ESP-IDF");
-    return;
-    #endif
-#endif
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "esp_lcd_new_panel_* failed: %d", (int)err);
-        return;
-    }
-
-    err = esp_lcd_panel_reset(s_panel);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "esp_lcd_panel_reset failed: %d", (int)err);
-        return;
-    }
-    err = esp_lcd_panel_init(s_panel);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "esp_lcd_panel_init failed: %d", (int)err);
-        return;
-    }
+    ESP_ERROR_CHECK(esp_lcd_new_panel_ili9341(io_handle, &panel_config, &panel_handle));
+    
+    s_panel = panel_handle;
+    
+    ESP_ERROR_CHECK(esp_lcd_panel_reset(s_panel));
+    ESP_ERROR_CHECK(esp_lcd_panel_init(s_panel));
+    ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(s_panel, true));
 
     if (CONFIG_HW_LCD_BL_GPIO >= 0) {
         gpio_config_t bl_cfg = {
