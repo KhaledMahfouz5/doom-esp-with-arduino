@@ -28,22 +28,21 @@
 #include "freertos/task.h"
 #include <stdlib.h>
 #include "esp_err.h"
-
-extern void jsInit();
-extern int doom_main(int argc, char const * const *argv);
-extern void spi_lcd_init() ;
+#include "esp32-doom.h"
 
 void doomEngineTask(void *pvParameters)
 {
-    char const *argv[]={"doom","-cout","ICWEFDA", NULL};
-    doom_main(3, argv);
+    (void)pvParameters;
+    doom_init();
+    for (;;) {
+        doom_game_tick();
+        vTaskDelay(pdMS_TO_TICKS(1));
+    }
 }
 
 void app_main()
 {
 	//uart_control_init();
 	//xTaskCreate(uart_control_task, "uart_ctrl", 4096, NULL, 5, NULL);
-	spi_lcd_init();
-	jsInit();
 	xTaskCreatePinnedToCore(&doomEngineTask, "doomEngine", 18000, NULL, 5, NULL, 0);
 }

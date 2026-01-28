@@ -1,5 +1,6 @@
 idf_component_register(
     SRCS
+        esp32-doom.c
         display.c
         entities.c
         input.c

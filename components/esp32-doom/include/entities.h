@@ -40,7 +40,7 @@ extern "C" {
 #define S_HIDDEN              6
 
 
-struct Player { 
+typedef struct Player { 
   Coords pos;
   Coords dir;
   Coords plane;
@@ -52,9 +52,9 @@ struct Player {
   uint8_t secret3;
   int16_t score;
   bool cheats;
-};
+} Player;
 
-struct Entity {
+typedef struct Entity {
   UID uid;
   Coords pos;
   uint8_t state;
@@ -63,14 +63,14 @@ struct Entity {
   uint8_t timer;
   bool a;
   bool b;
-};
+} Entity;
 
-struct StaticEntity  { 
+typedef struct StaticEntity  { 
   UID uid;
   uint8_t x;
   uint8_t y;
   bool active;
-};
+} StaticEntity;
 
 Entity create_entity(uint8_t type, uint8_t x,  uint8_t y, uint8_t initialState, uint8_t initialHealth);
 StaticEntity create_static_entity(UID uid, uint8_t x,  uint8_t y, bool active);

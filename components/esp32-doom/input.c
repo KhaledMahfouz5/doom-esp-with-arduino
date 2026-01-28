@@ -9,6 +9,14 @@ static const char *TAG = "DOOM_INPUT";
 
 InputState input = {0};
 
+static inline void add_pin_mask(uint64_t *mask, int pin)
+{
+    if (pin < 0 || pin >= 64) {
+        return;
+    }
+    *mask |= (1ULL << (uint64_t)pin);
+}
+
 static bool read_button(int pin)
 {
     if (pin < 0) {
@@ -21,11 +29,11 @@ static bool read_button(int pin)
 void input_setup()
 {
     uint64_t pin_mask = 0;
-    if (K_LEFT >= 0) pin_mask |= (1ULL << K_LEFT);
-    if (K_RIGHT >= 0) pin_mask |= (1ULL << K_RIGHT);
-    if (K_UP >= 0) pin_mask |= (1ULL << K_UP);
-    if (K_DOWN >= 0) pin_mask |= (1ULL << K_DOWN);
-    if (K_FIRE >= 0) pin_mask |= (1ULL << K_FIRE);
+    add_pin_mask(&pin_mask, K_LEFT);
+    add_pin_mask(&pin_mask, K_RIGHT);
+    add_pin_mask(&pin_mask, K_UP);
+    add_pin_mask(&pin_mask, K_DOWN);
+    add_pin_mask(&pin_mask, K_FIRE);
 
     if (pin_mask == 0) {
         ESP_LOGW(TAG, "No input GPIOs configured");

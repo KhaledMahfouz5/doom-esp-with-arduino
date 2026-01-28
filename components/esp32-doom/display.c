@@ -10,6 +10,32 @@
 #include "esp_heap_caps.h"
 #include <string.h>
 
+#if __has_include("esp_lcd_ili9341.h")
+#include "esp_lcd_ili9341.h"
+#define DOOM_HAVE_ESP_LCD_ILI9341 1
+#endif
+
+#ifndef DOOM_HAVE_ESP_LCD_ILI9341
+#define DOOM_HAVE_ESP_LCD_ILI9341 0
+#endif
+
+#if __has_include("esp_lcd_st7789.h")
+#include "esp_lcd_st7789.h"
+#define DOOM_HAVE_ESP_LCD_ST7789 1
+#endif
+
+#ifndef DOOM_HAVE_ESP_LCD_ST7789
+#define DOOM_HAVE_ESP_LCD_ST7789 0
+#endif
+
+#ifndef CONFIG_HW_LCD_TYPE
+#define CONFIG_HW_LCD_TYPE 0
+#endif
+
+#ifndef CONFIG_HW_INV_BL
+#define CONFIG_HW_INV_BL 0
+#endif
+
 static const char *TAG = "DOOM_DISPLAY";
 
 static esp_lcd_panel_handle_t s_panel = NULL;
@@ -59,9 +85,19 @@ void setupDisplay() {
     };
 
 #if CONFIG_HW_LCD_TYPE == 0
+    #if DOOM_HAVE_ESP_LCD_ILI9341
     err = esp_lcd_new_panel_ili9341(io_handle, &panel_config, &s_panel);
+    #else
+    ESP_LOGE(TAG, "ILI9341 panel selected but esp_lcd_ili9341.h not available in this ESP-IDF");
+    return;
+    #endif
 #else
+    #if DOOM_HAVE_ESP_LCD_ST7789
     err = esp_lcd_new_panel_st7789(io_handle, &panel_config, &s_panel);
+    #else
+    ESP_LOGE(TAG, "ST7789 panel selected but esp_lcd_st7789.h not available in this ESP-IDF");
+    return;
+    #endif
 #endif
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "esp_lcd_new_panel_* failed: %d", (int)err);

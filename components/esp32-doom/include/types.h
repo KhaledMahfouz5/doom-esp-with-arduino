@@ -27,10 +27,10 @@ extern "C" {
 typedef uint16_t UID;
 typedef uint8_t  EType;
 
-struct Coords {
+typedef struct Coords {
   double x;
   double y;
-};
+} Coords;
 
 UID create_uid(EType type, uint8_t x, uint8_t y);
 EType uid_get_type(UID uid);

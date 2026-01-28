@@ -1,14 +1,25 @@
 /*
-   Sound abstraction for Doom-Nano-Brutality ESP32 port.
-   Original implementation used AVR timer ISR; this version provides a non-blocking stub.
-   Future: replace with PWM/I2S task that never blocks the game loop.
+   For infos how this works see 
+   http://fabiensanglard.net/gebbwolf3d_v2.1.pdf chapter 4.9.5
+   and
+   http://www.shikadi.net/moddingwiki/Inverse_Frequency_Sound_format
+   and
+   http://www.shikadi.net/moddingwiki/AudioT_Format
 */
+
+//constexpr uint8_t MUS_S*_SND_LEN = 30;
+//constexpr uint8_t mus_s*_snd[] PROGMEM = { };
+
+//constexpr uint8_t MUS_P*_SND_LEN = 15;
+//constexpr uint8_t mus_p*_snd[] PROGMEM = { };
 
 #ifndef _sound_h
 #define _sound_h
 
 #include <stdint.h>
 #include <stddef.h>
+
+
 
 #ifdef __cplusplus
 extern "C" {
