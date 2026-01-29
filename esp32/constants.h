@@ -40,12 +40,13 @@ constexpr uint8_t SOUND_PIN   = 9; // do not change, belongs to used timer
 #define LEVEL_SIZE          LEVEL_WIDTH / 2 * LEVEL_HEIGHT
 
 // scenes
-#define INTRO                 0
-#define GAME_PLAY             1
-#define DIFF                  2
-#define MUS                   3
-#define MID                   4
-#define SCORE                 5
+#define AUTH                  0
+#define INTRO                 1
+#define GAME_PLAY             2
+#define DIFF                  3
+#define MUS                   4
+#define MID                   5
+#define SCORE                 6
 // Game
 #define GUN_TARGET_POS        18
 #define GUN_SHOT_POS          GUN_TARGET_POS + 8
